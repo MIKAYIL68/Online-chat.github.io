@@ -1,0 +1,2 @@
+[tool.vercel]
+entrypoint = "lesson-2/Web_site.py"
