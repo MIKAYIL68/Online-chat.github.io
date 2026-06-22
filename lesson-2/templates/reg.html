@@ -7,13 +7,15 @@
 </head>
 <body>
     <form action="/send" method="post" class="reg-form">
-        <h2>Регистрация</h2>
-        Логин: <input name="login" class="input-field" required minlength="3"><br>
-        Пароль: <input type="password" name="password" class="input-field" required minlength="8"><br>
-        Номер телефона: <input name="phone" class="input-field"><br>
-        Электронная почта: <input type="email" name="Gmail" class="input-field" required><br>
-        <button type="submit" class="submit-btn">Зарегистрироваться</button>
-        <br><a href="/login">Уже есть аккаунт? Войти</a>
-    </form>
+    <h2>Регистрация</h2>
+    Логин: <input name="login" required minlength="3"><br>
+    Пароль: <input type="password" name="password" required minlength="8"><br>
+    Номер телефона: <input name="phone"><br>
+    Электронная почта: <input type="email" name="Gmail" required><br>
+    
+    <input type="submit" value="Зарегистрироваться" class="submit-btn">
+    
+    <br><a href="/login">Уже есть аккаунт? Войти</a>
+</form>
 </body>
 </html>
