@@ -1,0 +1,54 @@
+body {
+    background-color: #0db2e4;
+    font-family: Arial, sans-serif;
+}
+
+.my-button {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+.reg-form {
+    max-width: 300px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.submit-btn:hover {
+    background-color: #0056b3;
+}
+.reg-but{
+    border-radius: 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.log-but{
+    border-radius: 20px;
+    font-size: 16px;
+    cursor: pointer;
+}

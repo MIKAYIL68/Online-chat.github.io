@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль</title>
+    <link rel="stylesheet" href="/static/main.css">
+    <style>
+        .profile-card {
+            max-width: 420px;
+            margin: 80px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+            padding: 48px 40px 40px;
+        }
+        .profile-card h2 {
+            font-size: 1.6rem;
+            margin-bottom: 24px;
+            color: #1a1a2e;
+            text-align: center;
+        }
+        .profile-card p {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 12px;
+        }
+        .profile-card p:last-of-type {
+            border-bottom: none;
+        }
+        .profile-card p b {
+            color: #4f46e5;
+        }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+        .btn-back, .btn-logout {
+            flex: 1;
+            display: inline-block;
+            text-align: center;
+            text-decoration: none;
+            padding: 12px 0;
+            border-radius: 8px;
+            font-size: 0.97rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-back {
+            background: #f0f0ff;
+            color: #4f46e5;
+            border: 1.5px solid #c7d2fe;
+        }
+        .btn-back:hover {
+            background: #e0e7ff;
+        }
+        .btn-logout {
+            background: #fff0f0;
+            color: #e53e3e;
+            border: 1.5px solid #fed7d7;
+        }
+        .btn-logout:hover {
+            background: #fee2e2;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-card">
+        <h2>👤 Профиль</h2>
+        <p><b>Логин:</b> {{ login }}</p>
+        <p><b>Телефон:</b> {{ phone or "не указан" }}</p>
+        <p><b>Email:</b> {{ email }}</p>
+        <p><b>Дата регистрации:</b> {{ created_at }}</p>
+        <div class="btn-row">
+            <a href="/main_page" class="btn-back">🏠 На главную</a>
+            <a href="/logout" class="btn-logout">🚪 Выйти</a>
+        </div>
+    </div>
+</body>
+</html>

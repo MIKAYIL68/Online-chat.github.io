@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат</title>
+    <link rel="stylesheet" href="/static/main.css">
+    <style>
+        .chat-container { display: flex; max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); height: 70vh; overflow: hidden; }
+        .sidebar { width: 250px; background: #f7f7f9; padding: 20px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        .main-chat { flex: 1; display: flex; flex-direction: column; }
+        .chat-header { padding: 15px 20px; background: #4f46e5; color: white; font-weight: bold; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #fafafa; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 70%; padding: 10px 14px; border-radius: 8px; line-height: 1.4; word-wrap: break-word; }
+        .msg-global { background: #e0e7ff; align-self: flex-start; }
+        .msg-mine { background: #4f46e5; color: white; align-self: flex-end; }
+        .msg-private { background: #d1fae5; align-self: flex-start; }
+        .msg-sender { font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; opacity: 0.8; }
+        .chat-input-area { padding: 15px; background: #fff; border-top: 1px solid #ddd; display: flex; gap: 10px; align-items: center; }
+        .chat-input-area input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
+        .chat-input-area button { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .chat-input-area button:hover { background: #3730a3; }
+        .image-preview { max-width: 200px; border-radius: 6px; margin-top: 5px; cursor: pointer; }
+        
+        .sidebar button { width: 100%; margin-bottom: 10px; padding: 10px; border: none; background: #e5e7eb; border-radius: 6px; cursor: pointer; text-align: left; font-weight: bold; }
+        .sidebar button.active { background: #4f46e5; color: white; }
+        .action-group { margin-top: auto; padding-top: 20px; border-top: 1px solid #ddd; }
+        .action-group input { width: calc(100% - 20px); padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="sidebar">
+            <h3 style="margin-top:0; font-size: 1.1rem;" id="userDisplay">Загрузка...</h3>
+            <button id="btnGlobal" class="active" onclick="switchChat('GLOBAL')">🌍 Глобальный чат</button>
+            
+            <div style="margin-top: 20px;">
+                <p style="font-size: 0.9rem; margin-bottom: 5px;">ЛС (Введите ник):</p>
+                <input type="text" id="pmTarget" placeholder="Ник друга..." style="width: calc(100% - 20px); padding: 8px; margin-bottom: 5px;">
+                <button onclick="startPM()">✉️ Открыть ЛС</button>
+            </div>
+
+            <div class="action-group">
+                <p style="font-size: 0.9rem; margin-bottom: 5px;">Черный список:</p>
+                <input type="text" id="blockTarget" placeholder="Кого заблокировать?">
+                <button onclick="toggleBlock('block')" style="background: #fee2e2; color: #dc2626;">🚫 В блок</button>
+                <button onclick="toggleBlock('unblock')" style="background: #d1fae5; color: #059669;">✅ Разблок</button>
+            </div>
+            <a href="/main_page" style="text-align: center; display: block; margin-top: 15px; color: #666; text-decoration: none;">← На главную</a>
+        </div>
+
+        <div class="main-chat">
+            <div class="chat-header" id="chatTitle">🌍 Глобальный чат</div>
+            <div class="chat-messages" id="messagesBox"></div>
+            
+            <div class="chat-input-area">
+                <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="uploadImage()">
+                <button onclick="document.getElementById('imageInput').click()" style="background: #6b7280;">📸</button>
+                <input type="text" id="messageInput" placeholder="Введите сообщение..." onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button onclick="sendMessage()">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let currentUser = "";
+        let currentTarget = "GLOBAL";
+
+        // 1. Узнаем логин при загрузке
+        fetch('/api/me').then(r => r.json()).then(data => {
+            if (!data.login) { window.location.href = '/login'; return; }
+            currentUser = data.login;
+            document.getElementById('userDisplay').innerText = `👤 Вы: ${currentUser}`;
+            connectWS();
+            loadHistory();
+        });
+
+        // 2. Подключение к WebSockets
+        function connectWS() {
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            ws = new WebSocket(`${protocol}://${window.location.host}/ws/chat`);
+            
+            ws.onmessage = function(event) {
+                const msg = JSON.parse(event.data);
+                // Показываем сообщение только если оно относится к текущей открытой вкладке
+                if (currentTarget === "GLOBAL" && msg.receiver === "GLOBAL") {
+                    renderMessage(msg);
+                } else if (currentTarget !== "GLOBAL" && msg.receiver !== "GLOBAL") {
+                    // Если ЛС, проверяем что это переписка между нами и текущей целью
+                    if ((msg.sender === currentUser && msg.receiver === currentTarget) || 
+                        (msg.sender === currentTarget && msg.receiver === currentUser)) {
+                        renderMessage(msg);
+                    }
+                }
+            };
+            ws.onclose = () => setTimeout(connectWS, 3000); // Авто-переподключение
+        }
+
+        // 3. Загрузка старых сообщений из файла (базы)
+        function loadHistory() {
+            document.getElementById('messagesBox').innerHTML = '';
+            fetch(`/api/chat/history?target=${currentTarget}`)
+                .then(r => r.json())
+                .then(messages => messages.forEach(renderMessage));
+        }
+
+        // Отрисовка сообщения
+        function renderMessage(msg) {
+            const box = document.getElementById('messagesBox');
+            const div = document.createElement('div');
+            
+            let msgClass = "msg-global";
+            if (msg.sender === currentUser) msgClass = "msg-mine";
+            else if (msg.receiver !== "GLOBAL") msgClass = "msg-private";
+            
+            div.className = `message ${msgClass}`;
+            
+            const senderName = msg.sender === currentUser ? "Вы" : msg.sender;
+            let contentHtml = msg.type === "image" 
+                ? `<img src="${msg.content}" class="image-preview" onclick="window.open(this.src)">`
+                : msg.content;
+
+            div.innerHTML = `<div class="msg-sender">${senderName} ${msg.receiver !== 'GLOBAL' ? '(ЛС)' : ''}</div>${contentHtml}`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // 4. Отправка текста
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || ws.readyState !== WebSocket.OPEN) return;
+            
+            ws.send(JSON.stringify({ receiver: currentTarget, type: "text", content: text }));
+            input.value = '';
+        }
+
+        // 5. Загрузка и отправка картинки
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            if (!fileInput.files.length) return;
+            
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            
+            const res = await fetch('/api/chat/upload', { method: "POST", body: formData });
+            const data = await res.json();
+            
+            if (data.url) {
+                ws.send(JSON.stringify({ receiver: currentTarget, type: "image", content: data.url }));
+            }
+            fileInput.value = ''; // сброс
+        }
+
+        // 6. Переключение чатов
+        function switchChat(target) {
+            currentTarget = target;
+            document.getElementById('btnGlobal').classList.toggle('active', target === 'GLOBAL');
+            document.getElementById('chatTitle').innerText = target === 'GLOBAL' ? '🌍 Глобальный чат' : `✉️ ЛС: ${target}`;
+            loadHistory();
+        }
+
+        function startPM() {
+            const target = document.getElementById('pmTarget').value.trim();
+            if (target && target !== currentUser) switchChat(target);
+        }
+
+        // 7. Блокировка
+        async function toggleBlock(action) {
+            const target = document.getElementById('blockTarget').value.trim();
+            if (!target || target === currentUser) return;
+            
+            await fetch(`/api/chat/action?action=${action}&target=${target}`, { method: 'POST' });
+            alert(action === 'block' ? `Пользователь ${target} заблокирован` : `Пользователь ${target} разблокирован`);
+            document.getElementById('blockTarget').value = '';
+            if (currentTarget === "GLOBAL") loadHistory(); // Обновляем чат
+        }
+    </script>
+</body>
+</html>

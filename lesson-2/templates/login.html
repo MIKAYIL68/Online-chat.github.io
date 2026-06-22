@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход</title>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body>
+    <form action="/check-login" method="post" class="reg-form">
+        <h2>Вход в систему</h2>
+        Логин: <input name="login" class="input-field" required><br>
+        Пароль: <input type="password" name="password" class="input-field" required><br>
+        <button type="submit" class="submit-btn">Войти</button>
+        <br><a href="/reg">Нет аккаунта? Зарегистрироваться</a>
+    </form>
+</body>
+</html>
